@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import TopBar from "./components/ui/TopBar";
 import Sidebar from "./components/ui/Sidebar";
@@ -17,13 +17,50 @@ const App = () => {
   const nmvRef = useRef(new THREE.Vector3(0, 0, 1));
   const nmvWaterRef = useRef(new THREE.Vector3(0, 0, 1));
   const nmvFatRef = useRef(new THREE.Vector3(0, 0, 1));
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const [sidebarHeight, setSidebarHeight] = useState<number | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    const handleChange = (event?: MediaQueryListEvent) => {
+      setIsDesktop(event?.matches ?? mediaQuery.matches);
+    };
+    handleChange();
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (!sidebarRef.current || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setSidebarHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(sidebarRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col text-ink">
       <TopBar />
       <div className="flex-1 px-4 pb-6">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="relative min-h-[420px] overflow-hidden rounded-3xl border border-white/60 bg-white/60 shadow-xl backdrop-blur">
+          <div
+            className="relative min-h-[360px] overflow-hidden rounded-3xl border border-white/60 bg-white/60 shadow-xl backdrop-blur lg:min-h-0 lg:h-full"
+            style={isDesktop && sidebarHeight ? { height: sidebarHeight } : undefined}
+          >
             <ScannerScene
               nmvRef={nmvRef}
               nmvWaterRef={nmvWaterRef}
@@ -33,7 +70,7 @@ const App = () => {
               3D Spin Lab
             </div>
           </div>
-          <Sidebar>
+          <Sidebar ref={sidebarRef}>
             <TissueSelector />
             <ViewModeToggle />
             <FrameToggle />

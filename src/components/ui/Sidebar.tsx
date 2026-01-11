@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 
@@ -5,9 +6,10 @@ interface SidebarProps {
   children: ReactNode;
 }
 
-const Sidebar = ({ children }: SidebarProps) => {
+const Sidebar = forwardRef<HTMLElement, SidebarProps>(({ children }, ref) => {
   return (
     <motion.aside
+      ref={ref}
       initial={{ opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4 }}
@@ -16,6 +18,8 @@ const Sidebar = ({ children }: SidebarProps) => {
       {children}
     </motion.aside>
   );
-};
+});
+
+Sidebar.displayName = "Sidebar";
 
 export default Sidebar;
